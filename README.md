@@ -5,7 +5,7 @@
 [![CI](https://github.com/shinrenpan/JPNetworking/actions/workflows/ci.yml/badge.svg)](https://github.com/shinrenpan/JPNetworking/actions/workflows/ci.yml)
 ![Swift](https://img.shields.io/badge/Swift-6.2%2B-orange)
 ![Platforms](https://img.shields.io/badge/Platforms-iOS%2017%2B%20%7C%20macOS%2014%2B-blue)
-[![License](https://img.shields.io/github/license/shinrenpan/JPNetworking)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 A lightweight Swift Package for reusable networking in Swift projects.
 
