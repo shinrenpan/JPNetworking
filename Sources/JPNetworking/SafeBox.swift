@@ -1,0 +1,100 @@
+import Foundation
+
+// MARK: - SafeBox
+
+@propertyWrapper
+public struct SafeBox<T: LosslessStringConvertible & Codable & Sendable>: Codable, Sendable {
+    public var wrappedValue: T?
+
+    public init(wrappedValue: T? = nil) {
+        self.wrappedValue = wrappedValue
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+
+        if container.decodeNil() {
+            wrappedValue = nil
+            return
+        }
+
+        if let value = try? container.decode(T.self) {
+            wrappedValue = value
+            return
+        }
+
+        wrappedValue = Self.rescue(from: container)
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        if let value = wrappedValue {
+            try container.encode(value)
+        } else {
+            try container.encodeNil()
+        }
+    }
+
+    private static func rescue(from container: any SingleValueDecodingContainer) -> T? {
+        if let string = try? container.decode(String.self) {
+            return T(string)
+        }
+        if let int = try? container.decode(Int.self) {
+            return T("\(int)")
+        }
+        if let double = try? container.decode(Double.self) {
+            return T("\(double)")
+        }
+        return nil
+    }
+}
+
+// MARK: - SafeArray
+
+@propertyWrapper
+public struct SafeArray<T: Decodable & Sendable>: Codable, Sendable where T: Encodable {
+    public var wrappedValue: [T]
+
+    public init(wrappedValue: [T] = []) {
+        self.wrappedValue = wrappedValue
+    }
+
+    public init(from decoder: any Decoder) throws {
+        var container = try decoder.unkeyedContainer()
+        var elements: [T] = []
+
+        while !container.isAtEnd {
+            if let value = try? container.decode(T.self) {
+                elements.append(value)
+            } else {
+                _ = try? container.decode(EmptyCodable.self)
+            }
+        }
+
+        wrappedValue = elements
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        try wrappedValue.encode(to: encoder)
+    }
+}
+
+private struct EmptyCodable: Codable {}
+
+// MARK: - KeyedDecodingContainer
+
+public extension KeyedDecodingContainer {
+    func decode<T: LosslessStringConvertible & Codable & Sendable>(
+        _ type: SafeBox<T>.Type,
+        forKey key: Key
+    ) throws -> SafeBox<T> {
+        (try? decodeIfPresent(type, forKey: key)) ?? SafeBox(wrappedValue: nil)
+    }
+
+    func decode<T: Decodable & Sendable>(
+        _ type: SafeArray<T>.Type,
+        forKey key: Key
+    ) throws -> SafeArray<T> where T: Encodable {
+        (try? decodeIfPresent(type, forKey: key)) ?? SafeArray(wrappedValue: [])
+    }
+}
