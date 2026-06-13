@@ -2,6 +2,11 @@
 
 **[English](README.md) | [中文](README.zh.md)**
 
+[![CI](https://github.com/shinrenpan/JPNetworking/actions/workflows/ci.yml/badge.svg)](https://github.com/shinrenpan/JPNetworking/actions/workflows/ci.yml)
+![Swift](https://img.shields.io/badge/Swift-6.2%2B-orange)
+![Platforms](https://img.shields.io/badge/Platforms-iOS%2017%2B%20%7C%20macOS%2014%2B-blue)
+[![License](https://img.shields.io/github/license/shinrenpan/JPNetworking)](LICENSE)
+
 輕量的 Swift Package，為 Swift 專案提供可重用的網路層。
 
 ## 系統需求
