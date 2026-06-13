@@ -20,16 +20,6 @@ public extension EndPoint {
     var retryCount: Int { 0 }
     var timeout: TimeInterval { 30 }
     var decodePath: [String]? { nil }
-
-    func validate(_ data: Data, _ response: HTTPURLResponse) throws -> Data {
-        guard (200..<300).contains(response.statusCode) else {
-            throw APIError.serverError(
-                code: response.statusCode,
-                message: HTTPURLResponse.localizedString(forStatusCode: response.statusCode)
-            )
-        }
-        return data
-    }
 }
 
 extension EndPoint {

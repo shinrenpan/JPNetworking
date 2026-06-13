@@ -1,14 +1,14 @@
 # JPNetworking
 
-A lightweight Swift Package for reusable networking across MVVMC projects.
+A lightweight Swift Package for reusable networking in Swift projects.
 
 - Swift 6.2, iOS 17+, macOS 14+
 
 ## Goal
 
 - Zero project-specific dependencies in the package itself
-- Each project provides: BaseResponse, token source, base URL via EndPoint
-- Drop-in for any MVVMC project
+- Each project provides: token source, base URL, validation logic via EndPoint
+- Drop-in for any Swift project
 
 ---
 
@@ -17,13 +17,14 @@ A lightweight Swift Package for reusable networking across MVVMC projects.
 | File | Responsibility |
 |------|---------------|
 | `EndPoint.swift` | Protocol definition — path, method, headers, validate, decodePath, retry, timeout |
-| `URLSession+EndPoint.swift` | Core request execution + 401 intercept + retry logic |
+| `URLSession+EndPoint.swift` | Core request execution + 401 intercept + retry logic + logger |
 | `TokenRefresher.swift` | Actor — serializes refresh token calls, prevents race condition |
 | `APIError.swift` | Shared error enum |
 | `APIMethod.swift` | HTTP method enum |
 | `SafeBox.swift` | `SafeBox` + `SafeArray` property wrappers for safe decoding |
 | `ShieldedResponse.swift` | Generic wrapper for decoding via decodePath |
-| `BaseResponseProtocol.swift` | Marker protocol that each project's BaseResponse must conform to |
+| `EmptyResponse.swift` | Decodable placeholder for endpoints that return no body (204) |
+| `MultipartBuilder.swift` | Utility for building multipart/form-data request bodies |
 
 ---
 
@@ -47,11 +48,9 @@ Login/register endpoints override `needToken: false`.
 Each project implements `validate(_ data: Data, _ response: HTTPURLResponse) throws -> Data` on their EndPoint. This handles backend differences:
 
 - **HTTP status code backends**: check `response.statusCode`
-- **Custom code backends**: decode wrapper, check `wrapper.code`
+- **Custom code backends**: decode a local envelope struct, check `envelope.code`
 
 Both throw `APIError.serverError(code:message:)` — ViewModel sees no difference.
-
-The package provides a default validate that checks HTTP 200–299. Projects with custom code backends override it.
 
 ### decodePath
 
@@ -115,17 +114,9 @@ Generic enough for all projects. Backend-specific mapping happens in EndPoint.va
 
 ## What Each Project Must Provide
 
-1. `BaseResponse` conforming to `BaseResponseProtocol` — matches their backend contract
-2. `EndPoint.header` — inject token from project's UserManager/KeychainManager
-3. `EndPoint.baseURL` — staging vs production
+1. `EndPoint.header` — inject token from project's UserManager/KeychainManager
+2. `EndPoint.baseURL` — staging vs production
+3. `EndPoint.validate()` — response validation matching backend contract
 4. `EndPoint.decodePath` default — e.g. `{ ["data"] }` via extension
 5. Refresh token closure injected into `TokenRefresher`
 
----
-
-## Reference
-
-- Draco app APIManager: `/Users/joe/Documents/Company/Draco/app/draco-app-iOS/DracoApp/Sources/Managers/API/`
-- Blog posts: SafeBox/SafeArray, BaseResponseProtocol/ShieldedResponse, decodePath dynamic injection
-- BadBackendDemo: `/Users/joe/Documents/github/BadBackendDemo`
-- MVVMC architecture: `/Users/joe/Documents/github/MVVMC/CLAUDE.md`

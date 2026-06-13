@@ -36,13 +36,27 @@ public struct SafeBox<T: LosslessStringConvertible & Codable & Sendable>: Codabl
     }
 
     private static func rescue(from container: any SingleValueDecodingContainer) -> T? {
-        if let string = try? container.decode(String.self) {
-            return T(string)
+        if T.self == Bool.self {
+            if let str = try? container.decode(String.self) {
+                let lower = str.lowercased()
+                let result = lower == "true" || lower == "1" || lower == "yes"
+                return result as? T
+            }
+            if let int = try? container.decode(Int.self) {
+                return (int != 0) as? T
+            }
+            return nil
+        }
+
+        if let str = try? container.decode(String.self) {
+            if T.self == Int.self, let dbl = Double(str) { return Int(dbl) as? T }
+            return T(str)
         }
         if let int = try? container.decode(Int.self) {
             return T("\(int)")
         }
         if let double = try? container.decode(Double.self) {
+            if T.self == Int.self { return Int(double) as? T }
             return T("\(double)")
         }
         return nil
@@ -67,7 +81,7 @@ public struct SafeArray<T: Decodable & Sendable>: Codable, Sendable where T: Enc
             if let value = try? container.decode(T.self) {
                 elements.append(value)
             } else {
-                _ = try? container.decode(EmptyCodable.self)
+                _ = try? container.superDecoder()
             }
         }
 
@@ -78,8 +92,6 @@ public struct SafeArray<T: Decodable & Sendable>: Codable, Sendable where T: Enc
         try wrappedValue.encode(to: encoder)
     }
 }
-
-private struct EmptyCodable: Codable {}
 
 // MARK: - KeyedDecodingContainer
 

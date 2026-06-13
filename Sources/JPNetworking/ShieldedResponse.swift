@@ -20,7 +20,12 @@ public struct ShieldedResponse<T: Decodable>: Decodable {
     public let value: T
 
     public init(from decoder: any Decoder) throws {
-        let path = decoder.userInfo[.decodePath] as? [String] ?? []
+        guard let path = decoder.userInfo[.decodePath] as? [String] else {
+            throw DecodingError.dataCorrupted(.init(
+                codingPath: decoder.codingPath,
+                debugDescription: "decodePath in decoder.userInfo must be [String]"
+            ))
+        }
 
         do {
             let target = try Self.navigate(to: path, from: decoder)
